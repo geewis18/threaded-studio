@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Threaded Studio — Fiber Arts</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0b0b0d;
+      --bg-alt: #151518;
+      --card: #1d1d22;
+      --accent: #7bd88f;
+      --accent-soft: #2b3f33;
+      --text: #f5f5f7;
+      --muted: #9a9aa5;
+      --border: #2b2b33;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-alt);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0.04em;
+    }
+    header span {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    main {
+      padding: 16px 16px 80px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .section {
+      display: none;
+      animation: fade 0.2s ease-out;
+    }
+    .section.active {
+      display: block;
+    }
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    h2 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+    .sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 10px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+    }
+    .card-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .card-meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .card-notes {
+      font-size: 13px;
+      color: var(--text);
+    }
+    .form {
+      background: var(--bg-alt);
+      border-radius: 10px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      margin-top: 8px;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #101015;
+      color: var(--text);
+      font-size: 13px;
+    }
+    textarea {
+      min-height: 60px;
+      resize: vertical;
+    }
+    button.primary {
+      margin-top: 10px;
+      width: 100%;
+      padding: 10px;
+      border-radius: 999px;
+      border: none;
+      background: var(--accent);
+      color: #041006;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button.primary:hover {
+      background: #8ee6a0;
+    }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 11px;
+      margin-right: 4px;
+    }
+    .grid {
+      display: grid;
+      gap: 10px;
+    }
+    @media (min-width: 720px) {
+      .grid-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+    /* bottom nav */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #050507f0;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 6px 0 8px;
+      backdrop-filter: blur(12px);
+      z-index: 20;
+    }
+    .nav-item {
+      flex: 1;
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .nav-item span {
+      display: block;
+    }
+    .nav-icon {
+      font-size: 18px;
+      margin-bottom: 2px;
+    }
+    .nav-item.active {
+      color: var(--accent);
+    }
+    .journal-img {
+      width: 100%;
+      border-radius: 8px;
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Threaded Studio</h1>
+    <span>Fiber arts for men who craft</span>
+  </div>
+</header>
+
+<main>
+  <!-- Dashboard -->
+  <section id="dashboard" class="section active">
+    <h2>Studio Overview</h2>
+    <p class="sub">Quick glance at your yarn, patterns, projects, and public‑space sessions.</p>
+    <div class="grid grid-2">
+      <div class="card" id="summaryYarn"></div>
+      <div class="card" id="summaryPatterns"></div>
+      <div class="card" id="summaryProjects"></div>
+      <div class="card" id="summaryJournal"></div>
+    </div>
+  </section>
+
+  <!-- Yarn -->
+  <section id="yarn" class="section">
+    <h2>Yarn Directory</h2>
+    <p class="sub">Track the yarns that actually feel good in your hands and behave in public.</p>
+    <div class="form">
+      <label for="yarnName">Name</label>
+      <input id="yarnName" placeholder="Multi Ombre, Wool Ease, etc." />
+      <label for="yarnBrand">Brand</label>
+      <input id="yarnBrand" placeholder="Loops & Threads, etc." />
+      <label for="yarnFiber">Fiber</label>
+      <input id="yarnFiber" placeholder="100% acrylic, wool blend, etc." />
+      <label for="yarnColor">Colorway</label>
+      <input id="yarnColor" placeholder="Earth Fade, Charcoal, etc." />
+      <label for="yarnTags">Tags (comma‑separated)</label>
+      <input id="yarnTags" placeholder="public‑friendly, froggable, masculine tones" />
+      <label for="yarnNotes">Notes</label>
+      <textarea id="yarnNotes" placeholder="Smooth, good for big blankets in cafés."></textarea>
+      <button class="primary" onclick="addYarn()">Add Yarn</button>
+    </div>
+    <div id="yarnList"></div>
+  </section>
+
+  <!-- Patterns -->
+  <section id="patterns" class="section">
+    <h2>Pattern Library</h2>
+    <p class="sub">Keep the patterns that match your vibe: blankets, beanies, texture studies.</p>
+    <div class="form">
+      <label for="patternName">Name</label>
+      <input id="patternName" placeholder="Café Blanket, Nest Throw, etc." />
+      <label for="patternType">Type</label>
+      <input id="patternType" placeholder="Crochet, Knit, Tunisian, Hybrid" />
+      <label for="patternDifficulty">Difficulty</label>
+      <input id="patternDifficulty" placeholder="Easy, Medium, Hard" />
+      <label for="patternTags">Tags (comma‑separated)</label>
+      <input id="patternTags" placeholder="blanket, public‑crochet, texture" />
+      <label for="patternSource">Source (optional link)</label>
+      <input id="patternSource" placeholder="YouTube, Ravelry, etc." />
+      <label for="patternNotes">Notes</label>
+      <textarea id="patternNotes" placeholder="Pairs well with Multi Ombre, good for zoning out in Starbucks."></textarea>
+      <button class="primary" onclick="addPattern()">Add Pattern</button>
+    </div>
+    <div id="patternList"></div>
+  </section>
+
+  <!-- Projects -->
+  <section id="projects" class="section">
+    <h2>Project Tracker</h2>
+    <p class="sub">Log WIPs, frogged experiments, and finished pieces—with where you worked on them.</p>
+    <div class="form">
+      <label for="projectName">Project</label>
+      <input id="projectName" placeholder="Café Blanket, Gym Beanie, etc." />
+      <label for="projectStatus">Status</label>
+      <select id="projectStatus">
+        <option>WIP</option>
+        <option>Frogged</option>
+        <option>Finished</option>
+      </select>
+      <label for="projectYarn">Yarn</label>
+      <input id="projectYarn" placeholder="Match a yarn name you logged." />
+      <label for="projectPattern">Pattern</label>
+      <input id="projectPattern" placeholder="Match a pattern name you logged." />
+      <label for="projectLocation">Location</label>
+      <input id="projectLocation" placeholder="Starbucks, AMS Nest, SkyTrain, Home" />
+      <label for="projectNotes">Notes</label>
+      <textarea id="projectNotes" placeholder="Good flow, great for podcasts, might need bigger hook."></textarea>
+      <button class="primary" onclick="addProject()">Add Project</button>
+    </div>
+    <div id="projectList"></div>
+  </section>
+
+  <!-- Journal -->
+  <section id="journal" class="section">
+    <h2>Visual Journal</h2>
+    <p class="sub">Capture public setups, progress shots, and textures that feel like your life.</p>
+    <div class="form">
+      <label for="journalImage">Photo</label>
+      <input type="file" id="journalImage" accept="image/*" />
+      <label for="journalNotes">Notes</label>
+      <textarea id="journalNotes" placeholder="Starbucks, 7–9 pm, blanket rows + video essay."></textarea>
+      <button class="primary" onclick="addJournal()">Add Entry</button>
+    </div>
+    <div id="journalList"></div>
+  </section>
+</main>
+
+<!-- Bottom nav -->
+<nav class="bottom-nav">
+  <div class="nav-item active" data-target="dashboard">
+    <div class="nav-icon">🏠</div>
+    <span>Home</span>
+  </div>
+  <div class="nav-item" data-target="yarn">
+    <div class="nav-icon">🧵</div>
+    <span>Yarn</span>
+  </div>
+  <div class="nav-item" data-target="patterns">
+    <div class="nav-icon">📐</div>
+    <span>Patterns</span>
+  </div>
+  <div class="nav-item" data-target="projects">
+    <div class="nav-icon">📅</div>
+    <span>Projects</span>
+  </div>
+  <div class="nav-item" data-target="journal">
+    <div class="nav-icon">📸</div>
+    <span>Journal</span>
+  </div>
+</nav>
+
+<script>
+  // basic router using hash + nav
+  const sections = document.querySelectorAll('.section');
+  const navItems = document.querySelectorAll('.nav-item');
+
+  function showSection(id) {
+    sections.forEach(s => s.classList.toggle('active', s.id === id));
+    navItems.forEach(n => n.classList.toggle('active', n.dataset.target === id));
+    location.hash = id === 'dashboard' ? '' : '#' + id;
+    renderSummaries();
+  }
+
+  navItems.forEach(item => {
+    item.addEventListener('click', () => showSection(item.dataset.target));
+  });
+
+  window.addEventListener('load', () => {
+    const hash = location.hash.replace('#', '');
+    if (hash && document.getElementById(hash)) showSection(hash);
+    renderAll();
+  });
+
+  // storage helpers
+  const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+  const load = (k) => JSON.parse(localStorage.getItem(k) || '[]');
+
+  // YARN
+  function addYarn() {
+    const yarns = load('yarns');
+    const item = {
+      name: yarnName.value.trim(),
+      brand: yarnBrand.value.trim(),
+      fiber: yarnFiber.value.trim(),
+      color: yarnColor.value.trim(),
+      tags: yarnTags.value.split(',').map(t => t.trim()).filter(Boolean),
+      notes: yarnNotes.value.trim()
+    };
+    if (!item.name) return;
+    yarns.push(item);
+    save('yarns', yarns);
+    yarnName.value = yarnBrand.value = yarnFiber.value = yarnColor.value = yarnTags.value = yarnNotes.value = '';
+    renderYarn();
+  }
+
+  function renderYarn() {
+    const yarns = load('yarns');
+    yarnList.innerHTML = yarns.map(y => `
+      <div class="card">
+        <div class="card-title">${y.name}</div>
+        <div class="card-meta">${y.brand || ''} ${y.fiber ? '• ' + y.fiber : ''} ${y.color ? '• ' + y.color : ''}</div>
+        <div>${(y.tags || []).map(t => `<span class="pill">${t}</span>`).join('')}</div>
+        <div class="card-notes">${y.notes || ''}</div>
+      </div>
+    `).join('');
+  }
+
+  // PATTERNS
+  function addPattern() {
+    const patterns = load('patterns');
+    const item = {
+      name: patternName.value.trim(),
+      type: patternType.value.trim(),
+      difficulty: patternDifficulty.value.trim(),
+      tags: patternTags.value.split(',').map(t => t.trim()).filter(Boolean),
+      source: patternSource.value.trim(),
+      notes: patternNotes.value.trim()
+    };
+    if (!item.name) return;
+    patterns.push(item);
+    save('patterns', patterns);
+    patternName.value = patternType.value = patternDifficulty.value =
+      patternTags.value = patternSource.value = patternNotes.value = '';
+    renderPatterns();
+  }
+
+  function renderPatterns() {
+    const patterns = load('patterns');
+    patternList.innerHTML = patterns.map(p => `
+      <div class="card">
+        <div class="card-title">${p.name}</div>
+        <div class="card-meta">
+          ${p.type || ''} ${p.difficulty ? '• ' + p.difficulty : ''} 
+          ${p.source ? '• <a href="${p.source}" target="_blank" style="color: var(--accent); text-decoration:none;">link</a>' : ''}
+        </div>
+        <div>${(p.tags || []).map(t => `<span class="pill">${t}</span>`).join('')}</div>
+        <div class="card-notes">${p.notes || ''}</div>
+      </div>
+    `).join('');
+  }
+
+  // PROJECTS
+  function addProject() {
+    const projects = load('projects');
+    const item = {
+      name: projectName.value.trim(),
+      status: projectStatus.value,
+      yarn: projectYarn.value.trim(),
+      pattern: projectPattern.value.trim(),
+      location: projectLocation.value.trim(),
+      notes: projectNotes.value.trim()
+    };
+    if (!item.name) return;
+    projects.push(item);
+    save('projects', projects);
+    projectName.value = projectYarn.value = projectPattern.value =
+      projectLocation.value = projectNotes.value = '';
+    projectStatus.value = 'WIP';
+    renderProjects();
+  }
+
+  function renderProjects() {
+    const projects = load('projects');
+    projectList.innerHTML = projects.map(p => `
+      <div class="card">
+        <div class="card-title">${p.name}</div>
+        <div class="card-meta">
+          ${p.status} ${p.yarn ? '• ' + p.yarn : ''} ${p.pattern ? '• ' + p.pattern : ''} ${p.location ? '• ' + p.location : ''}
+        </div>
+        <div class="card-notes">${p.notes || ''}</div>
+      </div>
+    `).join('');
+  }
+
+  // JOURNAL
+  function addJournal() {
+    const file = journalImage.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const entries = load('journal');
+      entries.push({
+        img: e.target.result,
+        notes: journalNotes.value.trim(),
+        ts: Date.now()
